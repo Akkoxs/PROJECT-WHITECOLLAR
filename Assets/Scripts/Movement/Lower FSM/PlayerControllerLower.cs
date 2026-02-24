@@ -41,7 +41,7 @@ public class PlayerControllerLower : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
         groundChecker = GetComponent<GroundChecker>();
 
         //camera stuff
@@ -66,17 +66,19 @@ public class PlayerControllerLower : MonoBehaviour
         stateMachine = new StateMachine();
 
         //Declare states
-        //var idleState = new IdleState(player: this, animator);
-        //var walkState = new WalkState(player: this, animator);
-        //var runState = new RunState(player: this, animator);
+        var idleState = new IdleState(player: this, animator);
+        var walkState = new WalkState(player: this, animator);
+        var runState = new RunState(player: this, animator);
 
         //Define transitions
-        //At(from:idleState, to:walkState, condition:new FuncPredicate() =>  ) 
-        //At
+        At(idleState, walkState, new FuncPredicate(() => movement.magnitude > 0f)); 
+        At(walkState, idleState, new FuncPredicate(() => Mathf.Approximately(movement.magnitude, 0f))); 
+        At(walkState, runState, new FuncPredicate(() => movement.magnitude > 0f && runTimer.IsRunning));
+        At(runState, walkState, new FuncPredicate(() => movement.magnitude > 0f && !runTimer.IsRunning));
         //Any(idleState, new FuncPredicate(ReturnToIdleState));
 
         //Initial State
-        //stateMachine.SetState(idleState);
+        stateMachine.SetState(idleState);
     }
 
     void Start() => input.EnablePlayerActions();
@@ -99,17 +101,16 @@ public class PlayerControllerLower : MonoBehaviour
     void Update()
     {
         movement = new Vector3(input.Direction.x, 0f, input.Direction.y);
+        stateMachine.Update();
         HandleTimers();
-        //stateMachine.Update();
     }
 
     void FixedUpdate()
     {
-        HandleMovement();
-        //stateMachine.FixedUpdate();
+        stateMachine.FixedUpdate();
     }
 
-    public void HandleMovement() 
+    public void HandleWalking() 
     {
         //rotate movement direction to match camera rotation 
         Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
@@ -130,26 +131,33 @@ public class PlayerControllerLower : MonoBehaviour
     
     void HandleHorizontalMovement(Vector3 adjustedDirection) //this actually handles walking?
     {
-        if (runTimer.IsRunning)
+        Vector3 velocity = adjustedDirection * walkSpeed * Time.fixedDeltaTime;
+        rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
+    }
+
+    public void HandleRunning() //i split the HandleWalking() (formerly HandleMovement()) into this method as well to ahdnle running.
+    {
+        //rotate movement direction to match camera rotation 
+        Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
+        if (adjustedDirection.magnitude > 0f)
         {
-            Vector3 velocity = adjustedDirection * runSpeed * Time.fixedDeltaTime;
-            rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
+            HandleRotation(adjustedDirection);
+            HandleHorizBoriz(adjustedDirection);
+            SmoothSpeed(adjustedDirection.magnitude);
         }
         else
         {
-            Vector3 velocity = adjustedDirection * walkSpeed * Time.fixedDeltaTime;
-            rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
+            SmoothSpeed(0f);
+
+            //reset horizontal velocity for a snappy stop
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
         }
-        
     }
 
-    void HandleRun(Vector3 adjustedDirection)
+    void HandleHorizBoriz(Vector3 adjustedDirection)
     {
         Vector3 velocity = adjustedDirection * runSpeed * Time.fixedDeltaTime;
-        if (runTimer.IsRunning)
-        {
-            rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.y);
-        }
+        rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
     }
 
     //subscribed to run input action, starts and stops run timers 

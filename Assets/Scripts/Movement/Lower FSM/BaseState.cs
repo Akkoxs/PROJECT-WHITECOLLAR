@@ -8,7 +8,6 @@ public abstract class BaseState: IState {
     protected static readonly int IdleHash = Animator.StringToHash(name:"Idle"); 
     protected static readonly int WalkHash = Animator.StringToHash(name:"Walk"); 
     protected static readonly int RunHash = Animator.StringToHash(name:"Run"); 
-    protected static readonly int JumpHash = Animator.StringToHash(name:"Jump");
 
     //Time to transition between animations 
     protected const float crossFadeDuration = 0.1f; 

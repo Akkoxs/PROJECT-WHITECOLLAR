@@ -1,4 +1,3 @@
-
 //from https://www.youtube.com/watch?v=NnH6ZK5jt7o
 
 //To add a new state
@@ -8,9 +7,9 @@
 //4. Need a State
 //5. Affect the RB velocity 
 
-
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class StateMachine
 {

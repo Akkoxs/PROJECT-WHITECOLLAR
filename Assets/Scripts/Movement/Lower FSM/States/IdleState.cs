@@ -7,7 +7,7 @@ public class IdleState : BaseState
 
     public override void OnEnter()
     {
-        animator.CrossFade(IdleHash, crossFadeDuration);
+        animator.CrossFade(IdleHash, normalizedTransitionDuration: crossFadeDuration);
     }
 
     public override void FixedUpdate()

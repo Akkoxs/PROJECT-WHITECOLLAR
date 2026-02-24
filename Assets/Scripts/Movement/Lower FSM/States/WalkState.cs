@@ -11,6 +11,6 @@ public class WalkState : BaseState
 
     public override void FixedUpdate()
     {
-        player.HandleMovement(); //naming is weird 
+        player.HandleWalking();
     }
 }
