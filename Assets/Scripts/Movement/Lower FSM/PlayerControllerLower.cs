@@ -5,18 +5,18 @@ using UnityEngine;
 
 public class PlayerControllerLower : MonoBehaviour
 {
-
     [Header("References")]
     [SerializeField] Rigidbody rb;
     [SerializeField] Animator animator;
     [SerializeField] GroundChecker groundChecker;
-    [SerializeField] CinemachineCamera topDownCam;
+    [SerializeField] LayerMask groundLayer;
     [SerializeField] InputReader input; 
+
+    [Header("Mouse Settings")]
+    [SerializeField] float rotationSpeed = 3f;
 
     [Header("Walk Settings")]
     [SerializeField] float walkSpeed = 300f; 
-    [SerializeField] float rotationSpeed = 15f; 
-    [SerializeField] float smoothTime = 0.2f; //for animations 
 
     [Header("Run Settings")]
     [SerializeField] float runSpeed = 600f;
@@ -24,14 +24,17 @@ public class PlayerControllerLower : MonoBehaviour
     [SerializeField] float runDuration = 2.0f;
     [SerializeField] float runCooldown = 0.5f;
     
+    Camera mainCam; 
 
-    Transform mainCam; 
-
+    //also probably mouse aiming 
     Vector3 movement;
     Vector3 adjustedDirection;
-    float currentSpeed;
-    float velocity;
 
+    //mouse aiming 
+    Vector3 mouse;
+    Quaternion lookRotation;
+    Vector3 directionTarget;
+    
     List<Timer> timers;
     //TEMPORARY
     CountdownTimer runTimer;
@@ -46,7 +49,7 @@ public class PlayerControllerLower : MonoBehaviour
         groundChecker = GetComponent<GroundChecker>();
 
         //camera stuff
-        mainCam = Camera.main.transform;
+        mainCam = Camera.main;
         rb.freezeRotation = true; //so player does not tip over
 
         //Setup timers
@@ -96,17 +99,33 @@ public class PlayerControllerLower : MonoBehaviour
     void Update()
     {
         movement = new Vector3(input.Direction.x, 0f, input.Direction.y);
-        adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
         stateMachine.Update();
         HandleTimers();
     }
 
     void FixedUpdate()
     {
-        HandleRotation();
+        HandleAiming();
         stateMachine.FixedUpdate();
     }
 
+    public void HandleAiming()
+    {
+        Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
+
+        if(Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity,groundLayer))
+        {
+            mouse = hit.point;
+        }
+
+        directionTarget = new Vector3(mouse.x - transform.position.x, 0f, mouse.z - transform.position.z).normalized;
+        
+        if (directionTarget != Vector3.zero) // guard against zero vector
+        {
+            lookRotation = Quaternion.LookRotation(directionTarget);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
+        }
+    }
 
     public void HandleRotation()
     {
@@ -122,14 +141,16 @@ public class PlayerControllerLower : MonoBehaviour
         rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
     }
 
-    public void HandleWalking() 
+     public void HandleWalking() 
     {
+        adjustedDirection = Quaternion.AngleAxis(mainCam.transform.eulerAngles.y, Vector3.up) * movement; //for movement calcs
         Vector3 velocity = adjustedDirection * walkSpeed * Time.fixedDeltaTime;
         rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
     }
 
     public void HandleRunning()
     {
+        adjustedDirection = Quaternion.AngleAxis(mainCam.transform.eulerAngles.y, Vector3.up) * movement; //for movement calcs
         Vector3 velocity = adjustedDirection * runSpeed * Time.fixedDeltaTime;
         rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
     }
@@ -154,7 +175,6 @@ public class PlayerControllerLower : MonoBehaviour
     }
 
     //Helper methods 
-    void SmoothSpeed(float value) => currentSpeed = Mathf.SmoothDamp(current: currentSpeed, target:value, ref velocity, smoothTime);
     void At(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
     void Any(IState from, IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
 
