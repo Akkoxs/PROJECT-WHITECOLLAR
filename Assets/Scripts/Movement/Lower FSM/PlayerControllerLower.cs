@@ -10,7 +10,7 @@ public class PlayerControllerLower : MonoBehaviour
     [SerializeField] Rigidbody rb;
     [SerializeField] Animator animator;
     [SerializeField] GroundChecker groundChecker;
-    [SerializeField] CinemachineCamera freeLookVCam;
+    [SerializeField] CinemachineCamera topDownCam;
     [SerializeField] InputReader input; 
 
     [Header("Walk Settings")]
@@ -28,6 +28,7 @@ public class PlayerControllerLower : MonoBehaviour
     Transform mainCam; 
 
     Vector3 movement;
+    Vector3 adjustedDirection;
     float currentSpeed;
     float velocity;
 
@@ -46,12 +47,6 @@ public class PlayerControllerLower : MonoBehaviour
 
         //camera stuff
         mainCam = Camera.main.transform;
-        freeLookVCam.Follow = transform; //setting targets
-        freeLookVCam.LookAt = transform; 
-        //invoke event when observed transform is teleported, adjusting freelookVCam's position accordingly 
-        //positionDelta is a param from Cinemachine which we are passing our transform.position into?
-        freeLookVCam.OnTargetObjectWarped(transform, positionDelta: transform.position - freeLookVCam.transform.position - Vector3.forward);
-
         rb.freezeRotation = true; //so player does not tip over
 
         //Setup timers
@@ -101,60 +96,39 @@ public class PlayerControllerLower : MonoBehaviour
     void Update()
     {
         movement = new Vector3(input.Direction.x, 0f, input.Direction.y);
+        adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
         stateMachine.Update();
         HandleTimers();
     }
 
     void FixedUpdate()
     {
+        HandleRotation();
         stateMachine.FixedUpdate();
     }
 
-    public void HandleWalking() 
-    {
-        //rotate movement direction to match camera rotation 
-        Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
-        if (adjustedDirection.magnitude > 0f)
-        {
-            HandleRotation(adjustedDirection);
-            HandleHorizontalMovement(adjustedDirection);
-            SmoothSpeed(adjustedDirection.magnitude);
-        }
-        else
-        {
-            SmoothSpeed(0f);
 
-            //reset horizontal velocity for a snappy stop
-            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
-        }
+    public void HandleRotation()
+    {
+        if(adjustedDirection == Vector3.zero) return; //only handle rotation when moving
+
+        Quaternion targetRotation = Quaternion.LookRotation(adjustedDirection);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        transform.LookAt(transform.position + adjustedDirection);
     }
     
-    void HandleHorizontalMovement(Vector3 adjustedDirection) //this actually handles walking?
+    public void HandleIdle()
+    {
+        rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+    }
+
+    public void HandleWalking() 
     {
         Vector3 velocity = adjustedDirection * walkSpeed * Time.fixedDeltaTime;
         rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
     }
 
-    public void HandleRunning() //i split the HandleWalking() (formerly HandleMovement()) into this method as well to ahdnle running.
-    {
-        //rotate movement direction to match camera rotation 
-        Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
-        if (adjustedDirection.magnitude > 0f)
-        {
-            HandleRotation(adjustedDirection);
-            HandleHorizBoriz(adjustedDirection);
-            SmoothSpeed(adjustedDirection.magnitude);
-        }
-        else
-        {
-            SmoothSpeed(0f);
-
-            //reset horizontal velocity for a snappy stop
-            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
-        }
-    }
-
-    void HandleHorizBoriz(Vector3 adjustedDirection)
+    public void HandleRunning()
     {
         Vector3 velocity = adjustedDirection * runSpeed * Time.fixedDeltaTime;
         rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
@@ -171,14 +145,6 @@ public class PlayerControllerLower : MonoBehaviour
         {
             runTimer.Stop();
         }
-    }
-
-    void HandleRotation(Vector3 adjustedDirection)
-    {
-        //adjusted rotation to match the movement direction
-        Quaternion targetRotation = Quaternion.LookRotation(adjustedDirection);
-        transform.rotation = Quaternion.RotateTowards(from: transform.rotation, to: targetRotation, maxDegreesDelta: rotationSpeed * Time.deltaTime);
-        transform.LookAt(worldPosition: transform.position + adjustedDirection);
     }
 
     void HandleTimers(){

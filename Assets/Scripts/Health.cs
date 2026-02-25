@@ -4,7 +4,7 @@ using UnityEngine.Events;
 public class Health : MonoBehaviour, IDamageable, IHealable
 {
 
-    [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float maxHealth = 3f;
     [SerializeField] private float currentHealth; 
 
     //public read only 
@@ -25,8 +25,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
 
     public void TakeDamage(float dmgAmount)
     {
-        if (isDead)
-            return;
+        if (isDead) return;
         
         currentHealth = Mathf.Max(0, currentHealth - dmgAmount); //keeps between min and current 
         healthChanged?.Invoke(currentHealth, maxHealth);
@@ -64,8 +63,6 @@ public class Health : MonoBehaviour, IDamageable, IHealable
             currentHealth = maxHealth;
 
         healthChanged?.Invoke(currentHealth, maxHealth);
-
     } 
-
 
 }

@@ -12,7 +12,7 @@ public class IdleState : BaseState
 
     public override void FixedUpdate()
     {
-        //
+        player.HandleIdle();
     }
 
     
