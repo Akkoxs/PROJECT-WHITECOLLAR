@@ -1174,7 +1174,7 @@ MonoBehaviour:
   rb: {fileID: 0}
   animator: {fileID: 0}
   groundChecker: {fileID: 0}
-  freeLookVCam: {fileID: 43176793}
+  topDownCam: {fileID: 0}
   input: {fileID: 11400000, guid: 389928e5044fe854687342525ec2cf93, type: 2}
   walkSpeed: 300
   rotationSpeed: 15
