@@ -5,7 +5,7 @@ public class Health : MonoBehaviour, IDamageable, IHealable
 {
 
     [SerializeField] private float maxHealth = 3f;
-    [SerializeField] private float currentHealth; 
+    [SerializeField] private float currentHealth = 3f; 
 
     //public read only 
     public float MaxHealth => maxHealth; 
@@ -64,5 +64,4 @@ public class Health : MonoBehaviour, IDamageable, IHealable
 
         healthChanged?.Invoke(currentHealth, maxHealth);
     } 
-
 }

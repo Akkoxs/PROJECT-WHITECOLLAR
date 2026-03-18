@@ -5,7 +5,6 @@ public class HealthBar : MonoBehaviour
 {
     [SerializeField] private Slider slider; 
     [SerializeField] private Health health; 
-    //[SerializeField] private UIHelper uiHelper;
     [SerializeField] private Image barFill;
     [SerializeField] private float flashDuration = 0.2f;
 
@@ -31,7 +30,22 @@ public class HealthBar : MonoBehaviour
 
     private void UpdateHealth(float currentHealth, float maxHealth)
     {
-        slider.value = currentHealth/maxHealth;      
+        
+        //PLAN
+        //Build a prefab called HealthPoint, with the border image, filled spirte, empty sprite everything, also a SetFilled boolean method if its filled or not 
+        //From health bar create a bunch of these healthPoints prefabs into a horizontalLayout component which will automatically handle spacing 
+        
+        
+
+
+
+
         //StartCoroutine(uiHelper.BarFlash(flashDuration, flashColor, regColor, barFill));
+    }
+
+    //show your current health and then have it fade away after a certain period
+    private void ShowHealth()
+    {
+
     }
 }

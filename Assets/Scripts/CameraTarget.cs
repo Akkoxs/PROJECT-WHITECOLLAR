@@ -13,7 +13,7 @@ public class CameraTarget : MonoBehaviour
     void Awake()
     {
         mainCam = Camera.main;
-        player = FindObjectOfType<PlayerControllerLower>().transform;
+        player = FindAnyObjectByType<PlayerControllerLower>().transform;
     }
 
     void Update()
