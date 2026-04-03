@@ -1,0 +1,16 @@
+using UnityEngine;
+
+public class RunState : BaseState<PlayerControllerLower>
+{
+    public RunState(PlayerControllerLower player, Animator animator) : base(player, animator){ }
+    
+    public override void OnEnter()
+    {
+        animator.CrossFade(RunHash, crossFadeDuration);
+    }
+
+    public override void FixedUpdate()
+    {
+        player.HandleRunning();
+    }
+}

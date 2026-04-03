@@ -13,6 +13,8 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions
     public event UnityAction EnableMouseControlCamera = delegate { };
     public event UnityAction DisableMouseControlCamera = delegate { };
     public event UnityAction<bool> Run = delegate { };
+    public event UnityAction<bool> Dash = delegate { };
+    public event UnityAction<bool> Attack = delegate { };
 
     PlayerInputActions inputActions;
 
@@ -58,7 +60,15 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions
 
     public void OnFire(InputAction.CallbackContext context)
     {
-        //no op
+        switch (context.phase)
+        {
+            case InputActionPhase.Started:
+                Attack.Invoke(true);
+                break;
+            case InputActionPhase.Canceled:
+                Attack.Invoke(false);
+                break;
+        } 
     }
 
     //when input action phase is started, invoke enablemousecontrol event, otherwise disable
@@ -91,5 +101,18 @@ public class InputReader : ScriptableObject, PlayerInputActions.IPlayerActions
                 Run.Invoke(false);
                 break;
         }
+    }
+
+    public void OnDash(InputAction.CallbackContext context)
+    {
+        switch (context.phase)
+        {
+            case InputActionPhase.Started:
+                Dash.Invoke(true);
+                break;
+            case InputActionPhase.Canceled:
+                Dash.Invoke(false);
+                break;
+        } 
     }
 }
